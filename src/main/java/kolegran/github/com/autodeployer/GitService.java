@@ -8,19 +8,22 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class GitService {
     private final DeployService deployService;
 
-    public void cloneRepository(Map<String, Object> payload) {
-        Map<String, Object> repository = (Map<String, Object>) payload.get("repository");
+    public void cloneRepository(GitWebhookCommand cmd) {
+        try {
+            FileUtils.deleteDirectory(new File("src/main/resources/repository"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         try {
             Git.cloneRepository()
-                    .setURI((String) repository.get("url"))
+                    .setURI(cmd.getRepository().getUrl())
                     .setDirectory(new File("src/main/resources/repository"))
                     .call();
         } catch (GitAPIException e) {
@@ -28,11 +31,5 @@ public class GitService {
         }
 
         deployService.deployProject();
-
-        try {
-            FileUtils.deleteDirectory(new File("src/main/resources/repository"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
